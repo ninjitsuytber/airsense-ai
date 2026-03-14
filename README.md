@@ -24,9 +24,10 @@ graph TD
         Server --> NewsTool[News Fetcher Tool]
     end
 
-    subgraph ExternalProvider ["External APIs"]
-        Verifier & Expert -.->|ReAct Pattern| Gemini[Gemini 2.5 Flash]
-        NewsTool -.->|HTTP| NewsAPI[NewsAPI.org]
+    subgraph ExternalProvider ["External APIs / Infrastructure"]
+        Verifier & Expert -.->|Google AI Python SDK| Gemini[Gemini 2.5 Flash]
+        NewsTool -.->|HTTP requests| NewsAPI[NewsAPI.org]
+        Server -.->|Matplotlib / Pandas| Visuals[Data Processing Layer]
     end
 ```
 
@@ -62,13 +63,13 @@ AirSense AI utilizes a multi-agentic approach to ensure data accuracy and helpfu
 
 ### Backend Dependencies
 
-- Python 3.8 or higher
-- Flask and Flask-CORS
-- pandas
-- requests
-- google-genai
-- matplotlib
-- gunicorn (for production)
+- **python (3.8+)**: Core runtime.
+- **flask / flask-cors**: API server and cross-origin support.
+- **pandas**: High-performance data manipulation.
+- **requests**: Synchronous HTTP library for tool integration.
+- **google-genai**: The official Google AI SDK for ADK integration.
+- **matplotlib**: Automated visualization generation.
+- **gunicorn**: Production-grade WSGI server.
 
 ### APIs
 

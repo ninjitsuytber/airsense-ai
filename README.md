@@ -1,91 +1,118 @@
 # AirSense AI
 
-AirSense AI is a professional environment monitoring and analysis platform featuring a high-fidelity interactive terminal interface. The system provides real-time atmospheric data processing, autonomous agent reasoning, and multi-modal visualization.
+AirSense AI is a web-based, interactive terminal interface designed for analyzing air quality data. It leverages Google Gemini AI for intelligent data interpretation, Matplotlib for visualization, and NewsAPI for real-time environmental context.
 
-## Technical Core and Frameworks
-
-### Google Agent Development Kit (ADK)
-
-The heart of the AirSense intelligence engine is built on the official Google Agent Development Kit (ADK) SDK. This provides a robust, code-first framework for orchestrating AI agents with a focus on reliability and transparency.
-
-- Agent Definition: The system utilizes the `google.adk.agents.Agent` class to define a specialized environment analyst with high-context instructions.
-- Orchestration: A stateful `google.adk.runners.Runner` manages the analysis workflow, ensuring precise execution of analytical tools.
-- ReAct Pattern: Implementation of the "Reasoning and Acting" loop allows the AI to systematically verify or invalidate datasets, fetch external news context, and perform deep mathematical analysis before generating reports.
-
-### Google Gemini AI
-
-The project uses the Gemini 2.0 Flash model via the `google-genai` library. It serves as the cognitive layer for:
-
-- Data Relevancy Verification: Strict pre-analysis checks to ensure datasets are relevant to air quality.
-- Tabulated Analysis: Converting complex numeric data into precision-aligned ASCII tables.
-- Predictive Modeling: Generating short-term and long-term environmental outlooks based on current trends.
-
-### Analysis Backend
-
-- Framework: Flask with Flask-CORS for secure API communication.
-- Data Processing: Pandas for robust CSV parsing and statistical summary generation.
-- Real-time Enrichment: Integration with NewsAPI to inject current global environmental context into the agent's reasoning loop.
-- Visualization: Matplotlib with a custom "Matrix Green" styling engine, generating high-resolution PNGs encoded as Base64 for terminal rendering.
-
-### Terminal Frontend
-
-- Language: Vanilla JavaScript (ES6+) for maximum performance.
-- UI Design: A custom terminal emulator with simulated typing, ASCII art banners, and responsive command-line interaction.
-- PDF Generation: jsPDF integration for producing portable, professional analysis reports including full thinking logs and charts.
-
-## System Workflow
+## System Architecture
 
 ```mermaid
 graph TD
-    User([User]) -->|Provide CSV| Frontend[Terminal Interface]
-    Frontend -->|POST /api/analyze| Backend[Flask API]
-    Backend -->|Initialize| Agent[ADK Agent]
-    Agent -->|Step 1: Verify| Gemini[Gemini 2.0 Flash]
-    Gemini -->|Think & Validate| Agent
-    Agent -->|Step 2: Context| NewsAPI[NewsAPI.org]
-    Agent -->|Step 3: Analyze| Gemini
-    Gemini -->|Complex Reasoning| Agent
-    Agent -->|Step 4: Visualize| Matplotlib[Matplotlib Engine]
-    Backend -->|JSON Package| Frontend
-    Frontend -->|Render trace & charts| User
+    subgraph UserSpace ["User Space"]
+        User([User]) <-->|Input/Visuals| App[App Terminal: /app]
+    end
+
+    subgraph BackendSpace ["Analysis Agents: /agents"]
+        App <-->|POST /api/analyze| Server[Flask Server: server.py]
+        
+        subgraph AgentCore ["Agentic Reasoning"]
+            Server --> Verifier[Relevancy Verifier Agent]
+            Server --> Expert[Analysis Expert Agent]
+            Server --> Plotter[Visualizer Agent]
+        end
+    end
+
+    subgraph ToolSpace ["Modular Tools: /tools"]
+        Server --> NewsTool[News Fetcher Tool]
+    end
+
+    subgraph ExternalProvider ["External APIs"]
+        Verifier & Expert -.->|ReAct Pattern| Gemini[Gemini 2.5 Flash]
+        NewsTool -.->|HTTP| NewsAPI[NewsAPI.org]
+    end
 ```
 
-## Key Features
+## Agent Profiles
 
-- Autonomous Agent Reasoning: View the AI's internal thought process via Thinking Logs.
-- High-Resolution Charts: Real-time generation of Trend Lines, Pollutant Bar Charts, and Distribution Histograms.
-- Data Persistence: Persistent API key management using the Web Storage API.
-- Report Export: Instant PDF generation preserving all analytical insights and visual artifacts.
-- Command-Line Utility: Fully functional simulated shell environment with commands like `airsense`, `about`, `clear`, and `date`.
+AirSense AI utilizes a multi-agentic approach to ensure data accuracy and helpful insights:
 
-## Project Architecture
+1. **Relevancy Verifier Agent**: Strictly validates uploaded CSV data to ensure it contains air quality metrics. It provides an internal reasoning trace (<think> block) explaining why the data is accepted or rejected.
+2. **Analysis Expert Agent**: Interprets complex pollutant levels (AQI, PM2.5, NO2, etc.) and provides health-focused, tabulated reports. It compares real-time data against WHO/EPA standards and incorporates news context for long-term outlooks.
+3. **Data Visualization Agent**: Automatically detects numeric pollution patterns and generates dynamic trend charts, distribution histograms, and comparison bars using Matplotlib.
 
-- /index.html: Main entry point and terminal structure.
-- /style.css: Retro-futuristic aesthetic definitions and responsive grid system.
-- /script.js: Core frontend engine, API handler, and terminal emulator logic.
-- /server.py: Production-ready Flask server orchestrating the ADK agentic loop.
-- /requirements.txt: Complete dependency manifest.
+### Project Structure
 
-## Installation and Execution
+- **/agents**: Core logic and backend server.
+  - `server.py`: Flask-based analysis engine.
+- **/tools**: MCP-style modular tools.
+  - `news_tool.py`: Real-time environmental news fetcher.
+- **/app**: Frontend interactive terminal.
+  - `index.html`, `style.css`, `script.js`: Terminal interface and UI logic.
+- `requirements.txt`: Project dependencies.
+- `README.md`: Documentation and setup.
 
-### Prerequisites
+## Prerequisites
 
-- Python 3.8+
-- Google Gemini API Key
+### Backend Dependencies
 
-### Backend Setup
+- Python 3.8 or higher
+- Flask and Flask-CORS
+- pandas
+- requests
+- google-genai
+- matplotlib
+- gunicorn (for production)
 
-1. Install dependencies:
+### APIs
+
+- Google Gemini API Key (obtainable from Google AI Studio)
+- NewsAPI Key (integrated in server.py)
+
+## Installation and Setup
+
+### 1. Backend Setup
+
+1. Install the required Python packages:
    pip install -r requirements.txt
-2. Start the analysis server:
-   python server.py
-   The backend serves at <http://localhost:5000>.
+2. Start the Flask server:
+   python agents/server.py
+   The server will run on <http://localhost:5000> by default.
 
-### Frontend Setup
+### 2. Frontend Setup
 
-1. Open index.html in a web browser.
-2. Initialize the system by typing 'airsense' in the interactive terminal.
+1. Simply open app/index.html in any modern web browser.
+2. Ensure the backend server is running to use the analysis features.
 
-## Technical Narrative
+## How to Use
 
-AirSense AI represents a shift toward "Agentic Design Patterns" where the AI does not just respond to prompts but follows a systematic analytical ritual: observing data, verifying context, reasoning through implications, and acting by generating multi-modal outputs.
+1. Initial Setup: Type 'help' to see available commands or 'airsense' to start the analysis tool.
+2. API Key: If it is your first time using the tool, you will be prompted to enter your Google Gemini API key. This key is saved in your browser's local storage for future sessions.
+3. Upload Data: Select 'Upload CSV file' and choose a valid CSV containing air quality metrics (e.g., AQI, PM2.5, PM10, CO).
+4. Review Results: The AI will validate the data, provide a tabulated analysis, generate trend charts, and list related environmental news.
+
+## Features
+
+- Interactive Terminal: A fully functional command-line interface simulation written in vanilla JavaScript.
+- AI Analysis: Uses Gemini 2.5 Flash to interpret complex pollutants and provide health insights.
+- Dynamic Visualizations: Automatically generates line charts, bar charts, and histograms based on the uploaded dataset.
+- Real-time News: Pulls relevant air quality news to provide context for the analyzed data.
+- API Key Persistence: Securely saves the user's API key in local storage and includes error handling for exhausted or invalid keys.
+- Mobile Responsive: Optimized for mobile viewing
+
+## Deployment Guide
+
+### Frontend Deployment (Netlify)
+
+1. Connect your GitHub repository to Netlify.
+2. The `netlify.toml` automatically sets the build folder to `/app`.
+3. Set your Production Backend URL in `app/script.js`.
+
+### Backend Deployment (Render / Cloud Run)
+
+1. Deploy the contents of the project to a platform that supports Python (like Render.com).
+2. Set the Start Command to: `gunicorn agents.server:app`
+3. Ensure all environment variables and dependencies in `requirements.txt` are satisfied.
+
+## Troubleshooting
+
+- Connection Error: Ensure the Flask server (server.py) is running on port 5000 and accessible from your browser.
+- Quota Exhausted: If you receive a 429 error, the Gemini API free tier limit may have been reached. Use the 'airsense' command again to enter a new API key.
+- Invalid CSV: Ensure your CSV file contains numeric data and clear headers related to air quality or pollutants.

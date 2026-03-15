@@ -110,12 +110,6 @@
 
 ## Deployment Guide
 
-### Frontend Deployment (Netlify)
-
-   1. Connect your GitHub repository to Netlify.
-   2. The `netlify.toml` automatically sets the build folder to `/app`.
-   3. Set your Production Backend URL in `app/script.js`.
-
 ### Backend Deployment (Google Cloud Run)
 
    1. The backend is deployed to **Google Cloud Run** using a custom Dockerfile.

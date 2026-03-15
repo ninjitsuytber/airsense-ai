@@ -17,47 +17,20 @@ const subBannerText = "Developed by <a href='https://stephensii.netlify.app/' ta
 
 let currentMode = 'normal';
 let geminiKey = localStorage.getItem('gemini_api_key') || '';
-let userToken = localStorage.getItem('user_token') || '';
+
+
+const PRODUCTION_BACKEND_URL = 'htpps://YOUR_OWN_CLOUD RUN_URL';
+const BACKEND_URL = PRODUCTION_BACKEND_URL || 'http://localhost:5000';
+
 
 const introText = "Welcome to the AirSense AI interactive terminal. Type 'help' for a list of available commands.";
 
-const PRODUCTION_BACKEND_URL = "https://airsense-backend-ova1.onrender.com";
-const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:5000'
-    : PRODUCTION_BACKEND_URL;
-
 const commands = {
-    help: "Available commands:\n  airsense - Launch the AirSense AI Analysis Tool\n  login   - Sign in with Google Account\n  logout  - Sign out of current session\n  about   - Display information about this site\n  clear   - Clear the terminal console\n  date    - Show current system date\n  echo    - Print given text",
+    help: "Available commands:\n  airsense - Launch the AirSense AI Analysis Tool\n  about   - Display information about this site\n  clear   - Clear the terminal console\n  date    - Show current system date\n  echo    - Print given text",
     about: "This is a AI powered terminal-based website.\nBuilt by <a href='https://stephensii.netlify.app/' target='_blank' class='btn-link'>Stephen Sii</a> from <a href='https://lattonlab.netlify.app/' target='_blank' class='btn-link'>Latton Lab</a> using HTML, CSS, Vanilla JavaScript and Python.\nEnjoy the tool!",
+
     date: () => new Date().toString(),
-
 };
-
-function handleLogin() {
-    printLine("Initializing Google Sign-In...", true);
-
-    printLine("Redirecting to Google OAuth...");
-    setTimeout(() => {
-        userToken = "simulated_google_token_" + Math.random().toString(36).substring(7);
-        localStorage.setItem('user_token', userToken);
-        printLine(`<span style="color: #4aea5dff">Successfully signed in!</span>`, true);
-        printLine("Authentication context will now be passed to the ADK backend.");
-    }, 1500);
-    return "Authenticating...";
-}
-
-function handleLogout() {
-    userToken = '';
-    localStorage.removeItem('user_token');
-    return "Signed out successfully.";
-}
-
-function updatePrompt() {
-    const promptElement = document.querySelector('.prompt');
-    if (promptElement) {
-        promptElement.textContent = `AirSense-AI:~$`;
-    }
-}
 
 function printBanner() {
     const bannerDiv = document.createElement('div');
@@ -93,31 +66,6 @@ function printLine(text, isHtml = false) {
     }
     output.appendChild(div);
     scrollToBottom();
-}
-
-function createSpinner(message) {
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'item';
-    output.appendChild(loadingDiv);
-
-    let frameIdx = 0;
-    const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-
-    const interval = setInterval(() => {
-        loadingDiv.innerHTML = `<span class="gradient-text">${spinnerFrames[frameIdx]}</span> ${message}`;
-        frameIdx = (frameIdx + 1) % spinnerFrames.length;
-    }, 80);
-
-    scrollToBottom();
-
-    return {
-        stop: () => {
-            clearInterval(interval);
-            if (output.contains(loadingDiv)) {
-                output.removeChild(loadingDiv);
-            }
-        }
-    };
 }
 
 function scrollToBottom() {
@@ -212,7 +160,7 @@ function handleCommand(cmdText) {
         localStorage.setItem('gemini_api_key', geminiKey);
         currentMode = 'normal';
         commandInput.type = 'text';
-        updatePrompt();
+        document.querySelector('.prompt').textContent = 'Visitor@AirSense-AI:~$';
 
         const placeholder = document.getElementById('placeholder-text');
         const targetText = "Type 'help' for a list of available commands or type 'airsense' to start the AI Analyzer Tool";
@@ -226,7 +174,7 @@ function handleCommand(cmdText) {
         }
 
         printLine("API Key saved securely (in localStorage).");
-        triggerAirSenseUpload();
+        startBackendAndProceed();
         return;
     }
 
@@ -236,7 +184,7 @@ function handleCommand(cmdText) {
 
     if (cmd === 'clear') {
         output.innerHTML = '';
-
+        setTimeout(updateInput, 0); // Trigger placeholder recalculation
         return;
     }
 
@@ -246,7 +194,7 @@ function handleCommand(cmdText) {
     }
 
     if (cmd === 'airsense') {
-        startAirSenseBackend();
+        startBackendAndProceed();
         return;
     }
 
@@ -260,40 +208,53 @@ function handleCommand(cmdText) {
     }
 }
 
-async function startAirSenseBackend() {
-    const inputLine = document.querySelector('.input-line');
-    inputLine.style.display = 'none';
-    const spinner = createSpinner("Connecting to AirSense Backend...");
+async function startBackendAndProceed() {
+    printLine("Starting AirSense Backend server... (This may take up to 50 seconds on the free tier)", true);
+
+    // Disable input while starting
+    commandInput.disabled = true;
+
+    // Create a loading animated item
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'item';
+    output.appendChild(loadingDiv);
+
+    let frameIdx = 0;
+    const spinnerFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
+    const loadingInterval = setInterval(() => {
+        loadingDiv.innerHTML = `<span class="gradient-text">${spinnerFrames[frameIdx]}</span> Waking up backend at ${BACKEND_URL}...`;
+        frameIdx = (frameIdx + 1) % spinnerFrames.length;
+    }, 80);
+    scrollToBottom();
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/analyze`, {
-            method: 'OPTIONS',
-            mode: 'cors'
-        });
-
-        spinner.stop();
-        printLine(`<span style="color: #4aea5dff">AirSense Backend is Ready!</span>`, true);
-
-        if (geminiKey) {
-            triggerAirSenseUpload();
+        const response = await fetch(`${BACKEND_URL}/ping`, { method: 'GET' });
+        if (response.ok) {
+            printLine("<span style='color:#4aea5dff'>Backend server is now active and ready!</span>", true);
         } else {
-            startAirSenseWizard();
+            printLine("<span style='color:#ff5555'>Warning: Backend responded with an error, but we will proceed anyway.</span>", true);
         }
-    } catch (error) {
-        spinner.stop();
-        if (API_BASE_URL.includes('localhost')) {
-            printLine("<span style='color: #f1e05a'>Warning: Local backend unreachable. Make sure your Flask server is running on port 5000.</span>", true);
-        } else {
-            printLine("<span style='color: #f1e05a'>Notice: Remote backend may be asleep (Render spin-up). Attempting to proceed...</span>", true);
-        }
+    } catch (e) {
+        printLine(`<span style='color:#ff5555'>Error: Could not connect to the AirSense Backend. Make sure the server is running locally or Render is up.</span>`, true);
+        clearInterval(loadingInterval);
+        if (output.contains(loadingDiv)) output.removeChild(loadingDiv);
+        commandInput.disabled = false;
+        commandInput.focus();
+        return;
+    }
 
-        if (geminiKey) {
-            triggerAirSenseUpload();
-        } else {
-            startAirSenseWizard();
-        }
-    } finally {
-        inputLine.style.display = 'flex';
+    clearInterval(loadingInterval);
+    if (output.contains(loadingDiv)) {
+        output.removeChild(loadingDiv);
+    }
+    commandInput.disabled = false;
+    commandInput.focus();
+
+    if (geminiKey) {
+        triggerAirSenseUpload();
+    } else {
+        startAirSenseWizard();
     }
 }
 
@@ -361,21 +322,33 @@ function triggerAirSenseUpload() {
         }
 
         printLine(`File selected: ${file.name}`);
+        printLine(`Connecting to AirSense Backend (${BACKEND_URL}/api/analyze)...`);
 
         const formData = new FormData();
         formData.append('file', file);
         formData.append('api_key', geminiKey);
-        if (userToken) {
-            formData.append('user_token', userToken);
-        }
 
         const inputLine = document.querySelector('.input-line');
         inputLine.style.display = 'none';
 
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'item';
+        output.appendChild(loadingDiv);
 
+        let frameIdx = 0;
+        const spinnerFrames = [
+            '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'
+        ];
+
+        const loadingInterval = setInterval(() => {
+            loadingDiv.innerHTML = `<span class="gradient-text">${spinnerFrames[frameIdx]}</span> Uploading & Analyzing CSV Data... This may take up to 60 seconds.`;
+            frameIdx = (frameIdx + 1) % spinnerFrames.length;
+        }, 80);
+
+        scrollToBottom();
 
         try {
-            const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+            const response = await fetch(`${BACKEND_URL}/api/analyze`, {
                 method: 'POST',
                 body: formData
             });
@@ -402,12 +375,17 @@ function triggerAirSenseUpload() {
                 return;
             }
 
+
             renderAnalysisResults(data.analysis, data.articles, data.charts, data.thought);
 
+
         } catch (error) {
-            printLine(`<span style='color:#ff5555'>Error: Could not connect to the AirSense Backend at ${API_BASE_URL}.</span>`, true);
+            printLine(`<span style='color:#ff5555'>Error: Could not connect to the AirSense Backend at ${BACKEND_URL}. Make sure the server is running.</span>`, true);
         } finally {
-            spinner.stop();
+            clearInterval(loadingInterval);
+            if (output.contains(loadingDiv)) {
+                output.removeChild(loadingDiv);
+            }
             inputLine.style.display = 'flex';
 
             if (document.body.contains(fileInput)) {
@@ -434,7 +412,7 @@ function renderAnalysisResults(analysis, articles, charts, thought) {
     if (charts && (charts.line_chart || charts.bar_chart || charts.histogram)) {
         printLine("");
         printLine("<span style='color: #4aea5dff'>[ GENERATED VISUALIZATIONS ]</span>", true);
-
+        printLine("Loading base64 encoded plotting data from Matplotlib...");
 
         const chartTypes = [
             { key: 'line_chart', name: 'AQI Trend Line Chart' },

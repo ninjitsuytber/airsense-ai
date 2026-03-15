@@ -76,23 +76,8 @@
 - Google Gemini API Key (obtainable from Google AI Studio)
 - NewsAPI Key (integrated in server.py)
 
-## Installation and Setup
-
-### 1. Backend Setup
-
-   1. Install the required Python packages:
-      pip install -r requirements.txt
-   2. Start the Flask server:
-      python agents/server.py
-      The server will run on <http://localhost:5000> by default.
-
-### 2. Frontend Setup
-
-   1. Simply open app/index.html in any modern web browser.
-   2. Ensure the backend server is running to use the analysis features.
-
 ## How to Use
-
+### Simply open app/index.html in any modern web browser.
    1. Initial Setup: Type 'help' to see available commands or 'airsense' to start the analysis tool.
    2. API Key: If it is your first time using the tool, you will be prompted to enter your Google Gemini API key. This key is saved in your browser's local storage for future sessions.
    3. Upload Data: Select 'Upload CSV file' and choose a valid CSV containing air quality metrics (e.g., AQI, PM2.5, PM10, CO).

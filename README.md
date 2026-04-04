@@ -105,7 +105,7 @@
 
 - Connection Error: Ensure the Flask server (server.py) is running on port 5000 and accessible from your browser.
 - Quota Exhausted: If you receive a 429 error, the Gemini API free tier limit may have been reached. Use the 'airsense' command again to enter a new API key.
-- Invalid CSV: Ensure your CSV file contains numeric data and clear headers related to air quality or pollutants.
+- Invalid CSV: Ensure your CSV file contains numeric data and clear headers related to air quality or any air related pollutants. 
 
 ---
 
